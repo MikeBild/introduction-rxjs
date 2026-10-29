@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fi" lang="fi">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <link type="text/css" rel="stylesheet" media="all" href="learn-rx.css" />
+  <link href="css/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="js/prettify.js"></script>
+  <script type="text/javascript" src="js/jquery-1.8.2.js"></script>
+  <script type="text/javascript" src="js/rx.js"></script>
+  <script type="text/javascript" src="js/rx.time.js"></script>
+  <script type="text/javascript" src="js/rx.jquery.js"></script>
+  <script type="text/javascript" src="js/jsDraw2D.js"></script>
+  <script type="text/javascript" src="learn-rx.js"></script>
+  <script type="text/javascript" src="slide.js"></script>
+</head>
+
+<script id="source" type="text/javascript">
+$(function() {
+  var rx = Rx.Observable
+  var input = $('#query').onAsObservable('keyup')
+    .throttle(50)
+    .select(function(e) { return $(e.target).val() })
+    .distinctUntilChanged()
+
+  var nextpage = rx.interval(200).where(bottomIsVisible)
+
+  function pager(q, page) {
+    return query(q, page).selectMany(function(res) {
+        return rx.returnValue(res).concat(nextpage.take(1).selectMany(function() { return pager(q, page+1) }))
+    })
+  }
+
+  var infinityScroll = input
+    .select(function(q) { 
+      var pages = pager(q, 0)
+      pages.take(1).subscribe(function(rs) { if (rs.length > 0) renderDetail(rs[0].url) })
+      return pages 
+    })
+    .switchLatest()
+
+  var selection = $('#overview li').liveAsObservable('click')
+    .select(function(x) { return $(x.target).map(function(i, link) { return link.href })[0] })
+
+  input.subscribe(function() { $("#overview").html("") })
+  infinityScroll.subscribe(renderResults)
+  selection.subscribe(renderDetail)
+
+  // String -> Int -> Observable [SearchResultJSON]
+  function query(term, page) {
+    var url = "http://ajax.googleapis.com/ajax/services/search/web?callback=?"
+    var pageSize = 10
+    var params = { v:"1.0", q:escape(term), num:pageSize, rsz:"large", safe:"off", start:page*pageSize }
+
+    return $.ajaxAsObservable({ url: url, dataType: "jsonp", data: params })
+            .select(function(d) { return d.data.responseData ? d.data.responseData.results : [] })
+  }
+
+  // SearchResultJSON -> ()
+  function renderResults(rs) {
+    $.each(rs, function(i, x) {
+      var link = '<a href="' + x.unescapedUrl + '" onclick="return false;">' + x.titleNoFormatting + "</a>"
+      $('#overview').append("<li>" + link + "</li>")
+    })
+  }
+
+  // String -> ()
+  function renderDetail(link) {
+    $('#detail').attr('src', link)
+  }
+
+  function bottomIsVisible() {
+    var elem = $('#overview')
+    var viewportBottom = $(window).scrollTop() + window.innerHeight
+    var loadingPoint = elem.offset().top + elem.outerHeight()
+    return viewportBottom >= loadingPoint
+  }
+})
+
+</script>
+
+<body class="container obd">
+<h1>Live search with overview beside detail</h1>
+
+<div id="overviewpanel">
+  <input type="text" id="query" autocomplete="off"/>
+
+  <ul id="overview">
+  </ul>
+</div>
+
+<div id="detailpanel">
+  <iframe id="detail" src="" style="width:100%; height:700px;">
+  </iframe>
+</div>
+
+</body>
+</html>

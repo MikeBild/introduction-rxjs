@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/rxjs/4.1.0/rx.all.js"></script>
+</head>
+<body>
+	
+</body>
+<script type="text/javascript">
+console.log(Rx.Observable)
+	const mouseClicks = Rx.Observable.fromEvent(document, 'click');
+	const subscription = mouseClicks
+		.do(x => console.log(x))
+		.subscribe();
+</script>
+</html>

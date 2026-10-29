@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+    <head>
+        <title>RxJs!</title>   
+        <script src="./libs/jquery-1.7.2.min.js" type="text/javascript"></script>
+        <script src="./libs/rx.min.js" type="text/javascript"></script>
+        <script src="./libs/rx.jquery.min.js" type="text/javascript"></script>
+		<script src="./libs/rx.time.min.js" type="text/javascript"></script>
+        <script type="text/javascript">
+
+        var isOdd = function(value) {
+            return value % 2 != 0;
+        };
+        var isEven = function(value) {
+            return value % 2 == 0;
+        };
+
+		$(function() {
+			var subscription = Rx.Observable.fromArray([1,2,3,4,5,6,7,8,9,0]);
+            subscription
+                    .select(function(x) {
+                        return x.toString()
+                    })
+                    .doAction(function(x) {
+                        console.log(x);
+                    })
+                    .subscribe();
+
+			subscription
+                    .where(isOdd)
+                    .select(function(x) {
+                        return x.toString()
+                    })
+                    .doAction(function(x) {
+                        $("#result").append("Odd value is: " + x + " ");
+                    })
+                    .subscribe();
+
+            subscription
+                    .where(isEven)
+                    .select(function(x) {
+                        return x.toString()
+                    })
+                    .doAction(function(x) {
+                        $("#result").append("Even value is: " + x + " ");
+                    })
+                    .subscribe();
+		});
+        </script>
+    </head>
+
+    <body style="font-family: Consolas, monospace; overflow: hidden">
+		<div id="result"></div>
+    </body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+    <head>
+        <title>RxJs!</title>   
+        <script src="./libs/jquery-1.7.2.min.js" type="text/javascript"></script>
+        <script src="./libs/rx.min.js" type="text/javascript"></script>
+        <script src="./libs/rx.jquery.min.js" type="text/javascript"></script>
+		<script src="./libs/rx.time.min.js" type="text/javascript"></script>
+        <script type="text/javascript">
+		$(function() {
+            var stream1 = Rx.Observable.range(1,10);
+            var stream2 = Rx.Observable.range(1,10);
+            var stream3 = Rx.Observable.interval(2000).select(function(x) { return "A";});
+            var stream4 = Rx.Observable.interval(1000).select(function(x) { return "B";});
+            var stream5 = $(document).keyupAsObservable().select(function(x) { return String.fromCharCode(x.keyCode);});
+        });
+        </script>
+    </head>
+
+    <body style="font-family: Consolas, monospace;">
+        <hr><h1>Merge</h1>
+        <div id="result1"></div>
+        <hr><h1>Concat</h1>
+		<div id="result2"></div>
+        <hr><h1>Zip</h1>
+        <div id="result3"></div>
+        <hr><h1>Merge Streamed</h1>
+        <div id="result4"></div>
+        <hr><h1>Concat Streamed</h1>
+        <div id="result5"></div>
+        <hr><h1>Amb Streamed</h1>
+        <div id="result6"></div>
+        <hr><h1>Zip Streamed</h1>
+        <div id="result7"></div>
+        <hr><h1>CombineLatest Streamed</h1>
+        <div id="result8"></div>
+    </body>
+</html>

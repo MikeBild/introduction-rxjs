@@ -1,0 +1,17 @@
+{
+  "name": "rxjs",
+  "description": "Microsoft's RxJS (Reactive Extensions for Javascript)",
+  "version": "1.0.10621",
+  "keywords": [
+    "reactive",
+    "rx",
+    "rxjs"
+  ],
+  "main": "./lib/rx",
+  "readme": "node-rx\r\n=======\r\n\r\nInstallation\r\n------------\r\n\r\nRun npm install rx\r\n\r\n\r\nUsage\r\n-----\r\n\r\nCheck examples/\r\n",
+  "_id": "rxjs@1.0.10621",
+  "dist": {
+    "shasum": "6c07fc14045d87f2c52c958de91754753edadaca"
+  },
+  "_from": "rxjs"
+}

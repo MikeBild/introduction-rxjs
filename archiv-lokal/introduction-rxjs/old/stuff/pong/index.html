@@ -1,0 +1,249 @@
+
+<html>
+	<head>
+		<title>GameQuery Pong</title>
+		<script type="text/javascript" src="lib/jquery-1.7.2.min.js"></script>
+		<script type="text/javascript" src="lib/jquery.gamequery.js"></script>
+		<script type="text/javascript">
+			
+			var game = function() {
+			
+				// private methods/properties
+				var private = {};
+				
+				private.PLAYGROUND_WIDTH = 600;
+				private.PLAYGROUND_HEIGHT = 300;
+				
+				private.status = -1;
+				
+				var get = function(key) {
+					return private[key];
+				}
+				
+				var set = function(key, val) {
+					private[key] = val;
+				}
+
+				// public methods/properties
+				return {
+					init: function() {						
+						$("#pause").hide();						
+						$("#playground").playground({height: get('PLAYGROUND_HEIGHT'), width: get('PLAYGROUND_WIDTH'), refreshRate: 30});		
+						$.playground().css('width', get('PLAYGROUND_WIDTH'));
+						$.playground().css('height', get('PLAYGROUND_HEIGHT'));
+						$.playground().css('position', 'relative');
+						$.playground().css('border', '1px solid #ccc');
+						
+						$.playground()
+						.addSprite('playerLeft', { animation: $.gameQuery.Animation({ imageURL:"./blank.gif" }), width:10, height:50 })
+						.addSprite('playerRight', { animation: $.gameQuery.Animation({ imageURL:"./blank.gif" }), width:10, height:50 });
+					
+						this.initBall();
+						this.initPlayers();
+						$('#playerLeft').get(0).gameQuery.score = 0;
+						$('#playerRight').get(0).gameQuery.score = 0;
+						
+						var classObj = this;
+						$().playground().registerCallback(function() {							
+							var status = get('status');
+							if (status > 0) {
+								// game is running
+								$("#ball").collision().each(function(){
+									console.log("log");
+									$("#ball").get(0).gameQuery.velX = -$('#ball').get(0).gameQuery.velX;
+								});								
+								classObj.renderBall();
+							}
+							return false;
+						}, 30);
+						
+					},
+					initBall: function() {
+						$('#ball').remove();
+						
+						$.playground().addSprite('ball', { animation:$.gameQuery.Animation({ imageURL:"./blank.gif" }), width:10, height:10 });
+						
+						$('#ball').get(0).gameQuery.velX = 3;
+						$('#ball').get(0).gameQuery.velY = 4;
+						
+						$('#ball').css('left', get('PLAYGROUND_WIDTH')/2);
+						$('#ball').css('top', get('PLAYGROUND_HEIGHT')/2);
+					},
+					initPlayers: function() {
+						var playerLeft = $('#playerLeft');
+						playerLeft.addClass('player');
+						playerLeft.css('top', get('PLAYGROUND_HEIGHT')/2);
+						playerLeft.css('left', 10);
+						
+						var playerRight = $('#playerRight');
+						playerRight.addClass('player');
+						playerRight.css('top', get('PLAYGROUND_HEIGHT')/2);
+						playerRight.css('left', get('PLAYGROUND_WIDTH')-20);				
+					},
+					renderBall: function() {					
+						var ballPosition = $('#ball').position();						
+						var PLAYGROUND_WIDTH = get('PLAYGROUND_WIDTH');
+						var PLAYGROUND_HEIGHT = get('PLAYGROUND_HEIGHT');
+						
+						ballPosition.left += $('#ball').get(0).gameQuery.velX;
+						ballPosition.top += $('#ball').get(0).gameQuery.velY;
+
+						if (ballPosition.top <= 0 || ballPosition.top+$('#ball').height() >= PLAYGROUND_HEIGHT) {
+							$('#ball').get(0).gameQuery.velY = -$('#ball').get(0).gameQuery.velY;
+						}						
+						$('#ball').css('top', ballPosition.top);
+						$('#ball').css('left', ballPosition.left);
+						
+						if (ballPosition.left <= 0) {
+							$('#playerRight').get(0).gameQuery.score++;
+							this.restart();
+						}
+						
+						if (ballPosition.left+$('#ball').width() >= PLAYGROUND_WIDTH) {
+							$('#playerLeft').get(0).gameQuery.score++;
+							this.restart();
+						}
+
+					},
+					renderScores: function() {
+						$('#scoreLeft').text( $('#playerLeft').get(0).gameQuery.score );
+						$('#scoreRight').text( $('#playerRight').get(0).gameQuery.score );
+					},
+					movePlayer: function(player, dir){
+						if (get('status') == 1) {
+							var pos = $(player).position();
+							var newPos = pos.top+dir;
+							if (newPos > 0 && newPos+$(player).height() < get('PLAYGROUND_HEIGHT')) {
+								$(player).css('top', newPos);
+							}
+						}
+					},
+					keyDownHandler: function(evt) {
+						//console.log(evt);
+						var thisObj = this;
+						switch(evt.keyCode) {
+							case 13:
+								if (get('status') == -1) {
+									this.start();
+								} else {
+									this.pause();
+								}
+								break;
+							case 38:
+								if (! this.moveRightInt) {
+									this.moveRightInt = window.setInterval( function() { thisObj.movePlayer('#playerRight', -4); }, 20);
+								}
+								break;
+							case 40:
+								if (! this.moveRightInt) {
+									this.moveRightInt = window.setInterval( function() { thisObj.movePlayer('#playerRight', 4); }, 20);
+								}
+								break;
+							case 81:
+								if (! this.moveLeftInt) {
+									this.moveLeftInt = window.setInterval( function() { thisObj.movePlayer('#playerLeft', -4); }, 20);
+								}
+								break;
+							case 65:
+								if (! this.moveLeftInt) {
+									this.moveLeftInt = window.setInterval( function() { thisObj.movePlayer('#playerLeft', 4); }, 20);
+								}
+								break;
+						}
+					},
+					keyUpHandler: function(evt) {
+						switch(evt.keyCode) {
+							case 38:
+							case 40:
+								window.clearInterval(this.moveRightInt);
+								this.moveRightInt = null;
+								break;
+							case 81:
+							case 65:
+								window.clearInterval(this.moveLeftInt);
+								this.moveLeftInt = null;
+						}						
+						
+					},
+					restart: function() {
+						this.pause();
+						this.renderScores();
+						this.initBall();
+						this.initPlayers();
+					},
+					start: function() {
+						if (get('status') == -1) {
+							set('status', 1);
+							$().playground().startGame(function(){
+								$("#welcome").remove();
+							});
+						}						
+					},
+					pause: function() {
+						var status = get('status');
+						if (status == 1) {
+							status = 0;
+							$("#pause").show();
+						} else if (status == 0) {
+							status = 1;
+							$("#pause").hide();
+						}
+						set('status', status);
+					}
+				}
+				
+			}();
+			
+			
+			$(function(){
+				game.init();
+
+				$('#welcome span').click(function(){
+					game.start();				
+				});
+				
+				$(document).keydown(function(evt){
+					game.keyDownHandler(evt);
+				});
+				$(document).keyup(function(evt){
+					game.keyUpHandler(evt);
+				});
+			});
+			
+		</script>
+		<style type="text/css">
+			
+			body { font-size:11px; font-family:Tahoma,Arial,Helvetica,Sans-serif; }
+			#playground { margin:auto; background:#eee; }
+			#welcome { text-align:center; }
+			#pause { text-align:center; }
+			
+			#console { width:600px; height:100px; background:#eee; border:1px solid #ccc; margin:10px auto 0 auto; overflow:auto; }
+			#ball { width:10px; height:10px; background:black; }
+			
+			#playerLeft { }
+			#playerRight { }
+			
+			.player { background:#ccc; border:1px solid #999; }			
+		</style>
+	</head>
+	<body>
+		
+		<div id="playground">
+			<div id="welcome">
+				Press [<span>Enter</span>] to Start the Game!
+			</div>
+			<div id="pause">
+				<br /> [Enter] Restart
+			</div>
+		</div>
+		<div id="console">
+			Left Player: <span id="scoreLeft">0</span>
+			<br />Right Player: <span id="scoreRight">0</span>
+			
+			<br />Left Player Controls: [q]/[a]
+			<br />Right Player Controls: Cursor [up]/[down]
+		</div>
+	
+	</body>
+</html>
